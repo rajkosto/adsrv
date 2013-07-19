@@ -27,6 +27,19 @@ func Make(actualHandler func(util.Config, *sql.DB, *msg.MessageWriter, *msg.Mess
 		wr := msg.NewWriter()
 		rdr := msg.NewReader(r.Body)
 
+		//every incoming message has protocol version as the first element
+		const MASSIVE_PROTOCOL_VERSION = "p2"
+		protoVer, rderr := rdr.ReadString()
+		if rderr != nil {
+			http.Error(w, rderr.Error(), http.StatusBadRequest)
+			return
+		}
+		if protoVer != MASSIVE_PROTOCOL_VERSION {
+			fmt.Printf("Invalid protocol version (%s) request denied from %s\n", protoVer, r.RemoteAddr)
+			http.Error(w, "Invalid protocol version", http.StatusBadRequest)
+			return
+		}
+
 		statusCode, tokenPtr, err := actualHandler(conf, db, wr, rdr, r.RemoteAddr)
 		if err != nil {
 			http.Error(w, err.Error(), statusCode)

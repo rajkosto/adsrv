@@ -9,24 +9,16 @@ import (
 )
 
 type LocateServiceMsg struct {
-	ver, sku string
+	sku string
 }
 
 func (m *LocateServiceMsg) Encode(w *msg.MessageWriter) error {
-	err := w.WriteString(m.ver)
-	if err != nil {
-		return err
-	}
-	err = w.WriteString(m.sku)
+	err := w.WriteString(m.sku)
 	return err
 }
 
 func (m *LocateServiceMsg) Decode(r *msg.MessageReader) error {
 	var err error
-	m.ver, err = r.ReadString()
-	if err != nil {
-		return err
-	}
 	m.sku, err = r.ReadString()
 	return err
 }
@@ -70,7 +62,7 @@ func LocateServiceHandler(conf util.Config, db *sql.DB, wr *msg.MessageWriter, r
 		return
 	}
 
-	fmt.Printf("%s: Serving /adsrv/locateService with ver:%s sku:%s\n", remoteAddr, reqMsg.ver, reqMsg.sku)
+	fmt.Printf("%s: Serving /adsrv/locateService sku:%s\n", remoteAddr, reqMsg.sku)
 
 	respMsg := ServiceLocationMsg{}
 	respMsg.zoneSrv, err = conf.GetString("servers", "zone")

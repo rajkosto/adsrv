@@ -14,7 +14,7 @@ import (
 )
 
 type OpenSessionMsg struct {
-	ver, sku           string
+	sku                string
 	sessionId, gamerId uint32
 	etoken             []byte
 	unkByte            byte
@@ -22,9 +22,6 @@ type OpenSessionMsg struct {
 }
 
 func (m *OpenSessionMsg) Encode(w *msg.MessageWriter) error {
-	if err := w.WriteString(m.ver); err != nil {
-		return err
-	}
 	if err := w.WriteString(m.sku); err != nil {
 		return err
 	}
@@ -48,9 +45,6 @@ func (m *OpenSessionMsg) Encode(w *msg.MessageWriter) error {
 
 func (m *OpenSessionMsg) Decode(r *msg.MessageReader) error {
 	var err error
-	if m.ver, err = r.ReadString(); err != nil {
-		return err
-	}
 	if m.sku, err = r.ReadString(); err != nil {
 		return err
 	}
@@ -122,8 +116,8 @@ func OpenSessionHandler(conf util.Config, db *sql.DB, wr *msg.MessageWriter, rdr
 	}
 	realToken := string(realTokenBytes)
 
-	fmt.Printf("%s: Serving /adsrv/openSession with ver:%s sku:%s sessionId:%d gamerId:%d token:%s unkByte:%d uuid:%s\n", remoteAddr,
-		reqMsg.ver, reqMsg.sku, reqMsg.sessionId, reqMsg.gamerId, realToken, uint32(reqMsg.unkByte), reqMsg.uuid)
+	fmt.Printf("%s: Serving /adsrv/openSession sku:%s sessionId:%d gamerId:%d token:%s unkByte:%d uuid:%s\n", remoteAddr,
+		reqMsg.sku, reqMsg.sessionId, reqMsg.gamerId, realToken, uint32(reqMsg.unkByte), reqMsg.uuid)
 
 	err = rdr.VerifyHash(&realToken)
 	if err != nil {
