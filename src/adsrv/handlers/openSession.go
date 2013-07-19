@@ -141,6 +141,13 @@ func OpenSessionHandler(conf util.Config, db *sql.DB, wr *msg.MessageWriter, rdr
 	}
 
 	if exists == true {
+		if sess.closed == true {
+			statusCode = http.StatusBadRequest
+			err = errors.New(fmt.Sprintf("Trying to re-open closed session %d", reqMsg.sessionId))
+			fmt.Println("%s: %s", remoteAddr, err.Error())
+			return
+		}
+
 		if realToken != sess.token || reqMsg.uuid != sess.uuid {
 			statusCode = http.StatusBadRequest
 			err = errors.New(fmt.Sprintf("Token/UUID mismatch for existing session %d", reqMsg.sessionId))
@@ -178,7 +185,7 @@ func OpenSessionHandler(conf util.Config, db *sql.DB, wr *msg.MessageWriter, rdr
 		return
 	}
 
-	fmt.Printf("%s: Sent response to /adsrv/openSession with sessionId:%d gamerId:%d\n", remoteAddr, respMsg.sessionId, respMsg.gamerId)
+	fmt.Printf("%s: Sent response to /adsrv/openSession with sessionId:%d gamerId:%d baseTimeMs:%d\n", remoteAddr, respMsg.sessionId, respMsg.gamerId, respMsg.baseTimeMs)
 	statusCode, tokenPtr, err = http.StatusOK, &realToken, nil
 	return
 }

@@ -7,6 +7,7 @@ import (
 type AdSession struct {
 	sessionId, gamerId uint32
 	token, uuid        string
+	closed             bool
 }
 
 func GetGamerIdForUuid(db *sql.DB, uuid string) (gamerId uint32, err error) {
@@ -58,13 +59,13 @@ func touchGameSession(db *sql.DB, sessionId, gamerId uint32) error {
 
 func GetSessionByIds(db *sql.DB, sessionId, gamerId uint32) (sess AdSession, exists bool, err error) {
 	var rows *sql.Rows
-	rows, err = db.Query("SELECT token, uuid FROM sessions JOIN gamers ON sessions.gamerId = gamers.gamerId WHERE sessions.sessionId = ? AND sessions.gamerId = ?", sessionId, gamerId)
+	rows, err = db.Query("SELECT token, uuid, (end IS NOT NULL) AS closed FROM sessions JOIN gamers ON sessions.gamerId = gamers.gamerId WHERE sessionId = ? AND sessions.gamerId = ?", sessionId, gamerId)
 	defer rows.Close()
 	if err != nil {
 		return
 	}
 	for rows.Next() {
-		err = rows.Scan(&sess.token, &sess.uuid)
+		err = rows.Scan(&sess.token, &sess.uuid, &sess.closed)
 		if err != nil {
 			return
 		}
@@ -77,26 +78,27 @@ func GetSessionByIds(db *sql.DB, sessionId, gamerId uint32) (sess AdSession, exi
 	rows.Close()
 
 	if exists == true {
-		if err = touchGameSession(db, sessionId, gamerId); err != nil {
-			return
-		}
-
 		sess.sessionId = sessionId
 		sess.gamerId = gamerId
-	}
 
+		if sess.closed == false {
+			if err = touchGameSession(db, sessionId, gamerId); err != nil {
+				return
+			}
+		}
+	}
 	return
 }
 
 func GetSessionByStrings(db *sql.DB, token, uuid string) (sess AdSession, exists bool, err error) {
 	var rows *sql.Rows
-	rows, err = db.Query("SELECT sessions.sessionId, sessions.gamerId FROM sessions JOIN gamers ON sessions.gamerId = gamers.gamerId WHERE token = ? AND uuid = ?", token, uuid)
+	rows, err = db.Query("SELECT sessionId, sessions.gamerId, (end IS NOT NULL) as closed FROM sessions JOIN gamers ON sessions.gamerId = gamers.gamerId WHERE token = ? AND uuid = ?", token, uuid)
 	defer rows.Close()
 	if err != nil {
 		return
 	}
 	for rows.Next() {
-		err = rows.Scan(&sess.sessionId, &sess.gamerId)
+		err = rows.Scan(&sess.sessionId, &sess.gamerId, &sess.closed)
 		if err != nil {
 			return
 		}
@@ -109,14 +111,15 @@ func GetSessionByStrings(db *sql.DB, token, uuid string) (sess AdSession, exists
 	rows.Close()
 
 	if exists == true {
-		if err = touchGameSession(db, sess.sessionId, sess.gamerId); err != nil {
-			return
-		}
-
 		sess.token = token
 		sess.uuid = uuid
-	}
 
+		if sess.closed == false {
+			if err = touchGameSession(db, sess.sessionId, sess.gamerId); err != nil {
+				return
+			}
+		}
+	}
 	return
 }
 
