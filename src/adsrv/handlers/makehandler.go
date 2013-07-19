@@ -2,12 +2,14 @@ package handlers
 
 import (
 	"adsrv/msg"
+	"adsrv/util"
+	"database/sql"
 	"fmt"
 	"net/http"
 	"strconv"
 )
 
-func Make(actualHandler func(*msg.MessageWriter, *msg.MessageReader, string) (int, *string, error)) http.HandlerFunc {
+func Make(actualHandler func(util.Config, *sql.DB, *msg.MessageWriter, *msg.MessageReader, string) (int, *string, error), conf util.Config, db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "POST" {
 			fmt.Printf("non POST (%s) request denied from %s\n", r.Method, r.RemoteAddr)
@@ -25,7 +27,7 @@ func Make(actualHandler func(*msg.MessageWriter, *msg.MessageReader, string) (in
 		wr := msg.NewWriter()
 		rdr := msg.NewReader(r.Body)
 
-		statusCode, tokenPtr, err := actualHandler(wr, rdr, r.RemoteAddr)
+		statusCode, tokenPtr, err := actualHandler(conf, db, wr, rdr, r.RemoteAddr)
 		if err != nil {
 			http.Error(w, err.Error(), statusCode)
 			return

@@ -1,12 +1,14 @@
 package handlers
 
 import (
+	"adsrv/msg"
+	"adsrv/util"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha1"
+	"database/sql"
 	"errors"
 	"fmt"
-	"adsrv/msg"
 	"net"
 	"net/http"
 )
@@ -104,7 +106,7 @@ func (m *SessionOpenMsg) Decode(r *msg.MessageReader) error {
 
 var rsaPrivKey *rsa.PrivateKey = LoadOrGenerateRsaKey("private.key", "public.key")
 
-func OpenSessionHandler(wr *msg.MessageWriter, rdr *msg.MessageReader, remoteAddr string) (statusCode int, tokenPtr *string, err error) {
+func OpenSessionHandler(conf util.Config, db *sql.DB, wr *msg.MessageWriter, rdr *msg.MessageReader, remoteAddr string) (statusCode int, tokenPtr *string, err error) {
 	statusCode = http.StatusBadRequest
 
 	reqMsg := OpenSessionMsg{}
@@ -133,11 +135,11 @@ func OpenSessionHandler(wr *msg.MessageWriter, rdr *msg.MessageReader, remoteAdd
 	var sess AdSession
 	var exists bool
 	if reqMsg.sessionId != 0 && reqMsg.gamerId != 0 {
-		sess, exists, err = GetSessionByIds(reqMsg.sessionId, reqMsg.gamerId)
+		sess, exists, err = GetSessionByIds(db, reqMsg.sessionId, reqMsg.gamerId)
 	} else {
-		reqMsg.gamerId, err = GetGamerIdForUuid(reqMsg.uuid)
+		reqMsg.gamerId, err = GetGamerIdForUuid(db, reqMsg.uuid)
 		if err == nil {
-			sess, exists, err = GetSessionByStrings(realToken, reqMsg.uuid)
+			sess, exists, err = GetSessionByStrings(db, realToken, reqMsg.uuid)
 		}
 	}
 	if err != nil {
@@ -171,7 +173,7 @@ func OpenSessionHandler(wr *msg.MessageWriter, rdr *msg.MessageReader, remoteAdd
 		sess.token = realToken
 		sess.uuid = reqMsg.uuid
 
-		if err = InsertNewSession(&sess, remoteIP.String()); err != nil {
+		if err = InsertNewSession(db, &sess, remoteIP.String()); err != nil {
 			return
 		}
 	}

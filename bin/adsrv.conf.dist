@@ -7,3 +7,7 @@ Database = adsrv
 Zone = adserver.local
 Media = adserver.local
 Impression = DISABLED
+
+[Host]
+Address = localhost
+Port = 8123

@@ -1,8 +1,10 @@
 package handlers
 
 import (
-	"fmt"
 	"adsrv/msg"
+	"adsrv/util"
+	"database/sql"
+	"fmt"
 	"net/http"
 )
 
@@ -60,7 +62,7 @@ func (m *ServiceLocationMsg) Decode(r *msg.MessageReader) error {
 	return err
 }
 
-func LocateServiceHandler(wr *msg.MessageWriter, rdr *msg.MessageReader, remoteAddr string) (statusCode int, tokenPtr *string, err error) {
+func LocateServiceHandler(conf util.Config, db *sql.DB, wr *msg.MessageWriter, rdr *msg.MessageReader, remoteAddr string) (statusCode int, tokenPtr *string, err error) {
 	reqMsg := LocateServiceMsg{}
 	err = reqMsg.Decode(rdr)
 	if err != nil {
@@ -71,15 +73,15 @@ func LocateServiceHandler(wr *msg.MessageWriter, rdr *msg.MessageReader, remoteA
 	fmt.Printf("%s: Serving /adsrv/locateService with ver:%s sku:%s\n", remoteAddr, reqMsg.ver, reqMsg.sku)
 
 	respMsg := ServiceLocationMsg{}
-	respMsg.zoneSrv, err = configFile.GetString("servers", "zone")
+	respMsg.zoneSrv, err = conf.GetString("servers", "zone")
 	if err != nil {
 		respMsg.zoneSrv = "DISABLED"
 	}
-	respMsg.impSrv, err = configFile.GetString("servers", "impression")
+	respMsg.impSrv, err = conf.GetString("servers", "impression")
 	if err != nil {
 		respMsg.impSrv = "DISABLED"
 	}
-	respMsg.mediaSrv, err = configFile.GetString("servers", "media")
+	respMsg.mediaSrv, err = conf.GetString("servers", "media")
 	if err != nil {
 		respMsg.mediaSrv = "DISABLED"
 	}

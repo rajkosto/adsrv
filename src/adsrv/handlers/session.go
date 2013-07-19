@@ -9,11 +9,11 @@ type AdSession struct {
 	token, uuid        string
 }
 
-func GetGamerIdForUuid(uuid string) (gamerId uint32, err error) {
+func GetGamerIdForUuid(db *sql.DB, uuid string) (gamerId uint32, err error) {
 	var rows *sql.Rows
 	var exists bool
 
-	rows, err = mainDatabase.Query("SELECT gamerId FROM gamers WHERE uuid = ?", uuid)
+	rows, err = db.Query("SELECT gamerId FROM gamers WHERE uuid = ?", uuid)
 	defer rows.Close()
 	if err != nil {
 		return
@@ -34,7 +34,7 @@ func GetGamerIdForUuid(uuid string) (gamerId uint32, err error) {
 
 	if exists == false {
 		var res sql.Result
-		res, err = mainDatabase.Exec("INSERT INTO gamers (uuid) VALUES (?)", uuid)
+		res, err = db.Exec("INSERT INTO gamers (uuid) VALUES (?)", uuid)
 		if err != nil {
 			return
 		}
@@ -51,14 +51,14 @@ func GetGamerIdForUuid(uuid string) (gamerId uint32, err error) {
 	return
 }
 
-func touchGameSession(sessionId, gamerId uint32) error {
-	_, err := mainDatabase.Exec("UPDATE sessions SET latest = CURRENT_TIMESTAMP WHERE sessionId = ? AND gamerId = ?", sessionId, gamerId)
+func touchGameSession(db *sql.DB, sessionId, gamerId uint32) error {
+	_, err := db.Exec("UPDATE sessions SET latest = CURRENT_TIMESTAMP WHERE sessionId = ? AND gamerId = ?", sessionId, gamerId)
 	return err
 }
 
-func GetSessionByIds(sessionId, gamerId uint32) (sess AdSession, exists bool, err error) {
+func GetSessionByIds(db *sql.DB, sessionId, gamerId uint32) (sess AdSession, exists bool, err error) {
 	var rows *sql.Rows
-	rows, err = mainDatabase.Query("SELECT token, uuid FROM sessions JOIN gamers ON sessions.gamerId = gamers.gamerId WHERE sessions.sessionId = ? AND sessions.gamerId = ?", sessionId, gamerId)
+	rows, err = db.Query("SELECT token, uuid FROM sessions JOIN gamers ON sessions.gamerId = gamers.gamerId WHERE sessions.sessionId = ? AND sessions.gamerId = ?", sessionId, gamerId)
 	defer rows.Close()
 	if err != nil {
 		return
@@ -77,7 +77,7 @@ func GetSessionByIds(sessionId, gamerId uint32) (sess AdSession, exists bool, er
 	rows.Close()
 
 	if exists == true {
-		if err = touchGameSession(sessionId, gamerId); err != nil {
+		if err = touchGameSession(db, sessionId, gamerId); err != nil {
 			return
 		}
 
@@ -88,9 +88,9 @@ func GetSessionByIds(sessionId, gamerId uint32) (sess AdSession, exists bool, er
 	return
 }
 
-func GetSessionByStrings(token, uuid string) (sess AdSession, exists bool, err error) {
+func GetSessionByStrings(db *sql.DB, token, uuid string) (sess AdSession, exists bool, err error) {
 	var rows *sql.Rows
-	rows, err = mainDatabase.Query("SELECT sessions.sessionId, sessions.gamerId FROM sessions JOIN gamers ON sessions.gamerId = gamers.gamerId WHERE token = ? AND uuid = ?", token, uuid)
+	rows, err = db.Query("SELECT sessions.sessionId, sessions.gamerId FROM sessions JOIN gamers ON sessions.gamerId = gamers.gamerId WHERE token = ? AND uuid = ?", token, uuid)
 	defer rows.Close()
 	if err != nil {
 		return
@@ -109,7 +109,7 @@ func GetSessionByStrings(token, uuid string) (sess AdSession, exists bool, err e
 	rows.Close()
 
 	if exists == true {
-		if err = touchGameSession(sess.sessionId, sess.gamerId); err != nil {
+		if err = touchGameSession(db, sess.sessionId, sess.gamerId); err != nil {
 			return
 		}
 
@@ -120,8 +120,8 @@ func GetSessionByStrings(token, uuid string) (sess AdSession, exists bool, err e
 	return
 }
 
-func InsertNewSession(sess *AdSession, ipAddr string) error {
-	res, err := mainDatabase.Exec("INSERT INTO sessions (gamerId, token, ip) VALUES (?, ?, ?)", sess.gamerId, sess.token, ipAddr)
+func InsertNewSession(db *sql.DB, sess *AdSession, ipAddr string) error {
+	res, err := db.Exec("INSERT INTO sessions (gamerId, token, ip) VALUES (?, ?, ?)", sess.gamerId, sess.token, ipAddr)
 	if err != nil {
 		return err
 	}
