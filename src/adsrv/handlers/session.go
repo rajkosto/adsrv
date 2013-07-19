@@ -2,6 +2,8 @@ package handlers
 
 import (
 	"database/sql"
+	"errors"
+	"fmt"
 )
 
 type AdSession struct {
@@ -90,6 +92,24 @@ func GetSessionByIds(db *sql.DB, sessionId, gamerId uint32) (sess AdSession, exi
 	return
 }
 
+func GetSessionForConsumption(db *sql.DB, sessionId, gamerId uint32) (sess AdSession, err error) {
+	var exists bool
+	sess, exists, err = GetSessionByIds(db, sessionId, gamerId)
+	if err != nil {
+		return
+	}
+	if exists == false {
+		err = errors.New(fmt.Sprintf("Session %d doesn't exist", sess.sessionId))
+		return
+	}
+	if sess.closed == true {
+		err = errors.New(fmt.Sprintf("Session %d is closed", sess.sessionId))
+		return
+	}
+	err = nil
+	return
+}
+
 func GetSessionByStrings(db *sql.DB, token, uuid string) (sess AdSession, exists bool, err error) {
 	var rows *sql.Rows
 	rows, err = db.Query("SELECT sessionId, sessions.gamerId, (end IS NOT NULL) as closed FROM sessions JOIN gamers ON sessions.gamerId = gamers.gamerId WHERE token = ? AND uuid = ?", token, uuid)
@@ -137,4 +157,13 @@ func InsertNewSession(db *sql.DB, sess *AdSession, ipAddr string) error {
 
 	sess.sessionId = uint32(bigId)
 	return nil
+}
+
+func CloseSession(db *sql.DB, sess *AdSession, timestamp uint64) error {
+	if sess.closed == true {
+		return nil
+	}
+
+	_, err := db.Exec("UPDATE sessions SET end = CURRENT_TIMESTAMP, durationMs = ? WHERE sessionId = ? AND gamerId = ?", timestamp, sess.sessionId, sess.gamerId)
+	return err
 }

@@ -33,6 +33,7 @@ func main() {
 
 	http.HandleFunc("/adsrv/locateService", handlers.Make(handlers.LocateServiceHandler, config, mainDb))
 	http.HandleFunc("/adsrv/openSession", handlers.Make(handlers.OpenSessionHandler, config, mainDb))
+	http.HandleFunc("/adsrv/closeSession", handlers.Make(handlers.CloseSessionHandler, config, mainDb))
 
 	var listenHost string
 	var listenPort int64
