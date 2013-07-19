@@ -1,0 +1,9 @@
+[Database]
+Username = youruser
+Password = yourpass
+Database = adsrv
+
+[Servers]
+Zone = adserver.local
+Media = adserver.local
+Impression = DISABLED
