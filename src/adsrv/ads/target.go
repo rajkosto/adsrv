@@ -6,22 +6,22 @@ import (
 
 //type 3
 type TargetElem struct {
-	id     uint32
-	name   string
-	medias []uint32
+	Id     uint32
+	Name   string
+	Medias []uint32
 }
 
 func (m *TargetElem) Encode(w *msg.MessageWriter) error {
-	if err := w.WriteInt(m.id); err != nil {
+	if err := w.WriteInt(m.Id); err != nil {
 		return err
 	}
-	if err := w.WriteString(m.name); err != nil {
+	if err := w.WriteString(m.Name); err != nil {
 		return err
 	}
-	if err := w.WriteShort(uint16(len(m.medias))); err != nil {
+	if err := w.WriteShort(uint16(len(m.Medias))); err != nil {
 		return err
 	}
-	for _, refId := range m.medias {
+	for _, refId := range m.Medias {
 		if err := w.WriteInt(refId); err != nil {
 			return err
 		}
@@ -32,19 +32,19 @@ func (m *TargetElem) Encode(w *msg.MessageWriter) error {
 
 func (m *TargetElem) Decode(r *msg.MessageReader) error {
 	var err error
-	if m.id, err = r.ReadInt(); err != nil {
+	if m.Id, err = r.ReadInt(); err != nil {
 		return err
 	}
-	if m.name, err = r.ReadString(); err != nil {
+	if m.Name, err = r.ReadString(); err != nil {
 		return err
 	}
 	var numElems uint16
 	if numElems, err = r.ReadShort(); err != nil {
 		return err
 	}
-	m.medias = make([]uint32, numElems)
-	for i := range m.medias {
-		if m.medias[i], err = r.ReadInt(); err != nil {
+	m.Medias = make([]uint32, numElems)
+	for i := range m.Medias {
+		if m.Medias[i], err = r.ReadInt(); err != nil {
 			return err
 		}
 	}

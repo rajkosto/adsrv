@@ -144,7 +144,7 @@ func GetSessionByStrings(db *sql.DB, token, uuid string) (sess AdSession, exists
 }
 
 func InsertNewSession(db *sql.DB, sess *AdSession, ipAddr string) error {
-	res, err := db.Exec("INSERT INTO sessions (gamerId, token, ip) VALUES (?, ?, ?)", sess.gamerId, sess.token, ipAddr)
+	res, err := db.Exec("INSERT INTO sessions (gamerId, token, ip, start) VALUES (?, ?, ?, CURRENT_TIMESTAMP)", sess.gamerId, sess.token, ipAddr)
 	if err != nil {
 		return err
 	}

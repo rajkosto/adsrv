@@ -75,6 +75,28 @@ func EnterZoneHandler(conf util.Config, db *sql.DB, wr *msg.MessageWriter, rdr *
 	if err = ads.AddZoneVisit(db, sess.sessionId, &respMsg.Zone, reqMsg.timestamp); err != nil {
 		return
 	}
+	if respMsg.Targets, err = ads.GetTargetsByZoneId(db, respMsg.Zone.Id); err != nil {
+		return
+	}
+	var mediaIds map[uint32]bool = make(map[uint32]bool)
+	for _, target := range respMsg.Targets {
+		for _, mediaId := range target.Medias {
+			mediaIds[mediaId] = true
+		}
+	}
+	respMsg.Medias = make([]ads.MediaElem, 0, len(mediaIds))
+	for k, v := range mediaIds {
+		if v != true {
+			continue
+		}
+
+		var media ads.MediaElem
+		if media, err = ads.GetMediaById(db, k); err != nil	{
+			return
+		}
+		respMsg.Medias = append(respMsg.Medias, media)
+	}
+
 	if err = respMsg.Encode(wr); err != nil {
 		return
 	}
