@@ -48,7 +48,7 @@ func (m *Crex) Decode(r *msg.MessageReader) error {
 type MediaElem struct {
 	id       uint32
 	name     string
-	unkShort uint16 //probably mimeType
+	mimeType uint16 //0x401 for bink, 1-15 for images, 2 is unsupported, 8-9 are unimplemented
 	fileSize uint32
 	fileMd5  string
 	filePath string
@@ -62,7 +62,7 @@ func (m *MediaElem) Encode(w *msg.MessageWriter) error {
 	if err := w.WriteString(m.name); err != nil {
 		return err
 	}
-	if err := w.WriteShort(m.unkShort); err != nil {
+	if err := w.WriteShort(m.mimeType); err != nil {
 		return err
 	}
 	if err := w.WriteInt(m.fileSize); err != nil {
@@ -88,7 +88,7 @@ func (m *MediaElem) Decode(r *msg.MessageReader) error {
 	if m.name, err = r.ReadString(); err != nil {
 		return err
 	}
-	if m.unkShort, err = r.ReadShort(); err != nil {
+	if m.mimeType, err = r.ReadShort(); err != nil {
 		return err
 	}
 	if m.fileSize, err = r.ReadInt(); err != nil {

@@ -136,7 +136,7 @@ func GetMediaById(db *sql.DB, mediaId uint32) (media MediaElem, err error) {
 
 	for rows.Next() {
 		var crex Crex
-		err = rows.Scan(&media.id, &media.name, &media.unkShort, &media.fileSize, &media.fileMd5, &media.filePath, &crex.id, &crex.minSize, &crex.rotDuration, &crex.minAngleDeg)
+		err = rows.Scan(&media.id, &media.name, &media.mimeType, &media.fileSize, &media.fileMd5, &media.filePath, &crex.id, &crex.minSize, &crex.rotDuration, &crex.minAngleDeg)
 		media.crex = crex
 		if err != nil {
 			return
